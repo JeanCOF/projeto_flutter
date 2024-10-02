@@ -6,33 +6,31 @@ class BankApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Banco Bancário', // Alterado o nome para "Banco Bancário"
+      title: 'Banco Bancário', // Nome atualizado
       theme: ThemeData(
         primaryColor: Colors.red[800], // Cor principal alterada para vermelho
         colorScheme: ColorScheme.fromSwatch().copyWith(
-          primary: Colors.red[800], // Vermelho como cor principal
-          secondary: Colors.black, // Preto para cor secundária
+          primary: Colors.red[800],
+          secondary: Colors.black, // Cor secundária preto
         ),
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.red[800], // Cor de fundo do AppBar em vermelho
+          backgroundColor: Colors.red[800],
         ),
-        scaffoldBackgroundColor: Colors.white, // Fundo da aplicação em branco
+        scaffoldBackgroundColor: Colors.white, // Fundo branco
         floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: Colors.red[800], // Botão de ação flutuante em vermelho
-          foregroundColor: Colors.white, // Texto e ícones em branco
+          backgroundColor: Colors.red[800], // Botão em vermelho
+          foregroundColor: Colors.white, // Ícones e texto brancos
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: Colors.black, // Fundo da barra de navegação em preto
-          selectedItemColor: Colors.red[800], // Ícone selecionado em vermelho
-          unselectedItemColor: Colors.white, // Ícones não selecionados em branco
+          backgroundColor: Colors.black, // Barra de navegação preta
+          selectedItemColor: Colors.red[800], // Item selecionado vermelho
+          unselectedItemColor: Colors.white, // Não selecionado branco
         ),
       ),
-      home: Dashboard(), // Mantido o Dashboard
+      home: Dashboard(), // Dashboard é a tela principal
     );
   }
 }
-
-
 
 // Classe principal do Dashboard
 class Dashboard extends StatefulWidget {
@@ -44,7 +42,7 @@ class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
 
   static List<Widget> _widgetOptions = <Widget>[
-    ListaTransferencia(), 
+    ListaTransferencia(),
     ListaContatos(),
   ];
 
@@ -75,10 +73,137 @@ class _DashboardState extends State<Dashboard> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: Colors.red[800],
+        unselectedItemColor: Colors.white,
         onTap: _onItemTapped,
       ),
     );
+  }
+}
+
+// Tela de Transferências
+class ListaTransferencia extends StatefulWidget {
+  final List<Transferencia> _transferencias = [];
+
+  @override
+  State<StatefulWidget> createState() {
+    return ListaTransferenciaState();
+  }
+}
+
+class ListaTransferenciaState extends State<ListaTransferencia> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title:
+            const Text('Transferências', style: TextStyle(color: Colors.white)),
+      ),
+      body: ListView.builder(
+        itemCount: widget._transferencias.length,
+        itemBuilder: (context, indice) {
+          final transferencia = widget._transferencias[indice];
+          return ItemTransferencia(transferencia);
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add, color: Colors.white),
+        onPressed: () {
+          final Future<Transferencia?> future = Navigator.push<Transferencia>(
+            context,
+            MaterialPageRoute(builder: (context) {
+              return FormularioTransferencia();
+            }),
+          );
+          future.then((transferenciaRecebida) {
+            if (transferenciaRecebida != null) {
+              setState(() {
+                widget._transferencias.add(transferenciaRecebida);
+              });
+            }
+          });
+        },
+      ),
+    );
+  }
+}
+
+class ItemTransferencia extends StatelessWidget {
+  final Transferencia _transferencia;
+
+  const ItemTransferencia(this._transferencia, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(Icons.monetization_on, color: Colors.red[800]),
+        title: Text(_transferencia.valor.toString()), // Exibe o valor
+        subtitle: Text(_transferencia.numeroConta.toString()), // Exibe a conta
+      ),
+    );
+  }
+}
+
+class FormularioTransferencia extends StatelessWidget {
+  final TextEditingController _controladorCampoNumeroConta =
+      TextEditingController();
+  final TextEditingController _controladorCampoValor = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Criando Transferência',
+            style: TextStyle(color: Colors.white)),
+      ),
+      body: Column(
+        children: <Widget>[
+          Editor(
+            controlador: _controladorCampoNumeroConta,
+            rotulo: 'Número da Conta',
+            dica: '0000',
+          ),
+          Editor(
+            controlador: _controladorCampoValor,
+            rotulo: 'Valor',
+            dica: '0.00',
+            icone: Icons.monetization_on,
+          ),
+          ElevatedButton(
+            child: Text('Confirmar'),
+            onPressed: () {
+              _criaTransferencia(context, _controladorCampoNumeroConta,
+                  _controladorCampoValor);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _criaTransferencia(
+      BuildContext context,
+      TextEditingController controladorCampoNumeroConta,
+      TextEditingController controladorCampoValor) {
+    final int? numeroConta = int.tryParse(controladorCampoNumeroConta.text);
+    final double? valor = double.tryParse(controladorCampoValor.text);
+    if (numeroConta != null && valor != null) {
+      final transferenciaCriada = Transferencia(valor, numeroConta);
+      Navigator.pop(context, transferenciaCriada);
+    }
+  }
+}
+
+class Transferencia {
+  final double valor;
+  final int numeroConta;
+
+  Transferencia(this.valor, this.numeroConta);
+
+  @override
+  String toString() {
+    return 'Transferencia{valor: $valor, numeroConta: $numeroConta}';
   }
 }
 
@@ -126,9 +251,10 @@ class ListaContatosState extends State<ListaContatos> {
           child: Text('Adicionar Contato'),
           onPressed: () {
             Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => FormularioContato())
-            ).then((contatoCriado) {
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => FormularioContato()))
+                .then((contatoCriado) {
               if (contatoCriado != null) {
                 setState(() {
                   widget._contatos.add(contatoCriado);
@@ -199,7 +325,8 @@ class FormularioContato extends StatelessWidget {
                     email.isNotEmpty &&
                     endereco.isNotEmpty &&
                     cpf.isNotEmpty) {
-                  final contatoCriado = Contato(nome, telefone, email, endereco, cpf);
+                  final contatoCriado =
+                      Contato(nome, telefone, email, endereco, cpf);
                   Navigator.pop(context, contatoCriado);
                 }
               },
@@ -216,8 +343,13 @@ class Editor extends StatelessWidget {
   final TextEditingController controlador;
   final String rotulo;
   final String dica;
+  final IconData? icone;
 
-  Editor({required this.controlador, required this.rotulo, required this.dica});
+  Editor(
+      {required this.controlador,
+      required this.rotulo,
+      required this.dica,
+      this.icone});
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +360,11 @@ class Editor extends StatelessWidget {
         decoration: InputDecoration(
           labelText: rotulo,
           hintText: dica,
+          icon: icone != null ? Icon(icone) : null,
         ),
+        keyboardType: icone == Icons.monetization_on
+            ? TextInputType.numberWithOptions(decimal: true)
+            : TextInputType.text,
       ),
     );
   }
